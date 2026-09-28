@@ -11,16 +11,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smartpantrymanager.R;
 import com.example.smartpantrymanager.models.PantryItem;
+import com.example.smartpantrymanager.utils.QuantityFormatter;
 
 import java.util.List;
 
 public class PantryAdapter
-        extends RecyclerView.Adapter<
-        PantryAdapter.PantryViewHolder> {
+        extends RecyclerView.Adapter<PantryAdapter.PantryViewHolder> {
 
     private List<PantryItem> pantryItems;
     private final OnPantryItemListener listener;
 
+    /**
+     * Interface used to send Edit and Delete actions
+     * back to PantryActivity.
+     */
     public interface OnPantryItemListener {
 
         void onEdit(PantryItem item);
@@ -28,6 +32,9 @@ public class PantryAdapter
         void onDelete(PantryItem item);
     }
 
+    /**
+     * Constructor for the RecyclerView adapter.
+     */
     public PantryAdapter(
             List<PantryItem> pantryItems,
             OnPantryItemListener listener) {
@@ -36,6 +43,9 @@ public class PantryAdapter
         this.listener = listener;
     }
 
+    /**
+     * Creates the layout used for each pantry item.
+     */
     @NonNull
     @Override
     public PantryViewHolder onCreateViewHolder(
@@ -43,15 +53,21 @@ public class PantryAdapter
             int viewType) {
 
         View view =
-                LayoutInflater.from(parent.getContext())
+                LayoutInflater
+                        .from(parent.getContext())
                         .inflate(
                                 R.layout.item_pantry,
                                 parent,
-                                false);
+                                false
+                        );
 
         return new PantryViewHolder(view);
     }
 
+    /**
+     * Places the pantry information into each
+     * RecyclerView item.
+     */
     @Override
     public void onBindViewHolder(
             @NonNull PantryViewHolder holder,
@@ -60,54 +76,92 @@ public class PantryAdapter
         PantryItem item =
                 pantryItems.get(position);
 
+        // Ingredient name
         holder.tvIngredientName.setText(
-                item.getIngredientName());
+                item.getIngredientName()
+        );
 
+        // Quantity and measurement unit.
+        // QuantityFormatter removes unnecessary
+        // decimal zeros.
+        //
+        // Example:
+        // 10.0 -> 10
+        // 1.5  -> 1.5
         holder.tvQuantity.setText(
-                item.getQuantity() + " " +
-                        item.getUnit());
+                QuantityFormatter.format(
+                        item.getQuantity()
+                )
+                        + " "
+                        + item.getUnit()
+        );
 
-        if (item.getExpiryDate() == null ||
-                item.getExpiryDate().trim().isEmpty()) {
+        // Expiry date
+        String expiryDate =
+                item.getExpiryDate();
+
+        if (expiryDate == null
+                || expiryDate.trim().isEmpty()) {
 
             holder.tvExpiry.setText(
-                    "Expiry: Not provided");
+                    "Expiry: Not specified"
+            );
 
         } else {
 
             holder.tvExpiry.setText(
-                    "Expiry: " +
-                            item.getExpiryDate());
+                    "Expiry: " + expiryDate
+            );
         }
 
+        // Edit ingredient
         holder.btnEdit.setOnClickListener(
-                v -> listener.onEdit(item));
+                v -> listener.onEdit(item)
+        );
 
+        // Delete ingredient
         holder.btnDelete.setOnClickListener(
-                v -> listener.onDelete(item));
+                v -> listener.onDelete(item)
+        );
     }
 
+    /**
+     * Returns the number of pantry records that
+     * should be displayed.
+     */
     @Override
     public int getItemCount() {
 
-        return pantryItems == null
-                ? 0
-                : pantryItems.size();
+        if (pantryItems == null) {
+            return 0;
+        }
+
+        return pantryItems.size();
     }
 
+    /**
+     * Replaces the RecyclerView data when the
+     * pantry is refreshed.
+     */
     public void setPantryItems(
             List<PantryItem> pantryItems) {
 
         this.pantryItems = pantryItems;
+
         notifyDataSetChanged();
     }
 
+    /**
+     * Holds references to the views contained
+     * inside item_pantry.xml.
+     */
     static class PantryViewHolder
             extends RecyclerView.ViewHolder {
 
         TextView tvIngredientName;
         TextView tvQuantity;
         TextView tvExpiry;
+
         Button btnEdit;
         Button btnDelete;
 
@@ -118,23 +172,28 @@ public class PantryAdapter
 
             tvIngredientName =
                     itemView.findViewById(
-                            R.id.tvIngredientName);
+                            R.id.tvIngredientName
+                    );
 
             tvQuantity =
                     itemView.findViewById(
-                            R.id.tvQuantity);
+                            R.id.tvQuantity
+                    );
 
             tvExpiry =
                     itemView.findViewById(
-                            R.id.tvExpiry);
+                            R.id.tvExpiry
+                    );
 
             btnEdit =
                     itemView.findViewById(
-                            R.id.btnEdit);
+                            R.id.btnEdit
+                    );
 
             btnDelete =
                     itemView.findViewById(
-                            R.id.btnDelete);
+                            R.id.btnDelete
+                    );
         }
     }
 }

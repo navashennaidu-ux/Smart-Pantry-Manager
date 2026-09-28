@@ -11,90 +11,94 @@ import com.example.smartpantrymanager.R;
 import com.example.smartpantrymanager.database.DatabaseHelper;
 import com.example.smartpantrymanager.models.Recipe;
 import com.example.smartpantrymanager.models.RecipeIngredient;
+import com.example.smartpantrymanager.utils.QuantityFormatter;
 
 import java.util.List;
 
-public class RecipeDetailActivity
-        extends AppCompatActivity {
+public class RecipeDetailActivity extends AppCompatActivity {
 
     @Override
-    protected void onCreate(
-            Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        setContentView(
-                R.layout.activity_recipe_detail);
+        setContentView(R.layout.activity_recipe_detail);
 
+        // Find views
         TextView tvRecipeName =
-                findViewById(
-                        R.id.tvRecipeDetailName);
+                findViewById(R.id.tvRecipeDetailName);
 
         TextView tvIngredients =
-                findViewById(
-                        R.id.tvRecipeIngredients);
+                findViewById(R.id.tvRecipeIngredients);
 
         TextView tvMethod =
-                findViewById(
-                        R.id.tvRecipeMethod);
+                findViewById(R.id.tvRecipeMethod);
 
         Button btnBack =
-                findViewById(
-                        R.id.btnBack);
+                findViewById(R.id.btnBack);
 
+        // Connect to SQLite database
         DatabaseHelper databaseHelper =
                 new DatabaseHelper(this);
 
+        // Get the recipe ID sent from
+        // SuggestedRecipesActivity
         int recipeId =
-                getIntent()
-                        .getIntExtra(
-                                "recipe_id",
-                                -1);
+                getIntent().getIntExtra(
+                        "recipe_id",
+                        -1
+                );
 
+        // Make sure a valid recipe ID was supplied
         if (recipeId == -1) {
 
             Toast.makeText(
-                            this,
-                            "Recipe not found",
-                            Toast.LENGTH_SHORT)
-                    .show();
+                    this,
+                    "Recipe not found",
+                    Toast.LENGTH_SHORT
+            ).show();
 
             finish();
-
             return;
         }
 
+        // Retrieve the selected recipe
         Recipe recipe =
-                databaseHelper
-                        .getRecipe(recipeId);
+                databaseHelper.getRecipe(recipeId);
 
         if (recipe == null) {
 
             Toast.makeText(
-                            this,
-                            "Recipe not found",
-                            Toast.LENGTH_SHORT)
-                    .show();
+                    this,
+                    "Recipe not found",
+                    Toast.LENGTH_SHORT
+            ).show();
 
             finish();
-
             return;
         }
 
+        // Display recipe name
         tvRecipeName.setText(
-                recipe.getName());
+                recipe.getName()
+        );
 
+        // Display preparation method
         tvMethod.setText(
-                recipe.getInstructions());
+                recipe.getInstructions()
+        );
 
+        // Retrieve the ingredients required
+        // for this recipe
         List<RecipeIngredient> ingredients =
-                databaseHelper
-                        .getRecipeIngredients(
-                                recipeId);
+                databaseHelper.getRecipeIngredients(
+                        recipeId
+                );
 
         StringBuilder ingredientText =
                 new StringBuilder();
 
+        // Build the ingredient list
         for (RecipeIngredient ingredient :
                 ingredients) {
 
@@ -102,22 +106,31 @@ public class RecipeDetailActivity
                     .append("• ")
                     .append(
                             ingredient
-                                    .getIngredientName())
+                                    .getIngredientName()
+                    )
                     .append(" - ")
                     .append(
-                            ingredient
-                                    .getRequiredQuantity())
+                            QuantityFormatter.format(
+                                    ingredient
+                                            .getRequiredQuantity()
+                            )
+                    )
                     .append(" ")
                     .append(
                             ingredient
-                                    .getUnit())
+                                    .getUnit()
+                    )
                     .append("\n");
         }
 
+        // Display the complete ingredient list
         tvIngredients.setText(
-                ingredientText.toString());
+                ingredientText.toString()
+        );
 
+        // Return to the Suggested Recipes screen
         btnBack.setOnClickListener(
-                v -> finish());
+                v -> finish()
+        );
     }
 }
