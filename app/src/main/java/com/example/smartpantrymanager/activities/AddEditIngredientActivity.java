@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.smartpantrymanager.R;
 import com.example.smartpantrymanager.database.DatabaseHelper;
 import com.example.smartpantrymanager.models.PantryItem;
+import com.example.smartpantrymanager.utils.QuantityFormatter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,25 +44,59 @@ public class AddEditIngredientActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_edit_ingredient);
 
-        databaseHelper = new DatabaseHelper(this);
+        setContentView(
+                R.layout.activity_add_edit_ingredient
+        );
 
-        // Find views
-        tvFormTitle = findViewById(R.id.tvFormTitle);
-        etIngredientName = findViewById(R.id.etIngredientName);
-        etQuantity = findViewById(R.id.etQuantity);
-        spinnerUnit = findViewById(R.id.spinnerUnit);
-        etExpiry = findViewById(R.id.etExpiry);
+        databaseHelper =
+                new DatabaseHelper(this);
+
+        // -----------------------------------------
+        // Connect Java variables to XML views
+        // -----------------------------------------
+
+        tvFormTitle =
+                findViewById(
+                        R.id.tvFormTitle
+                );
+
+        etIngredientName =
+                findViewById(
+                        R.id.etIngredientName
+                );
+
+        etQuantity =
+                findViewById(
+                        R.id.etQuantity
+                );
+
+        spinnerUnit =
+                findViewById(
+                        R.id.spinnerUnit
+                );
+
+        etExpiry =
+                findViewById(
+                        R.id.etExpiry
+                );
 
         Button btnSaveIngredient =
-                findViewById(R.id.btnSaveIngredient);
+                findViewById(
+                        R.id.btnSaveIngredient
+                );
 
         Button btnCancel =
-                findViewById(R.id.btnCancel);
+                findViewById(
+                        R.id.btnCancel
+                );
 
-        // Set up unit spinner
+        // -----------------------------------------
+        // Measurement unit spinner
+        // -----------------------------------------
+
         ArrayAdapter<String> unitAdapter =
                 new ArrayAdapter<>(
                         this,
@@ -70,46 +105,75 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                 );
 
         unitAdapter.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item
+                android.R.layout
+                        .simple_spinner_dropdown_item
         );
 
-        spinnerUnit.setAdapter(unitAdapter);
+        spinnerUnit.setAdapter(
+                unitAdapter
+        );
 
-        // -------------------------------------------------
+        // -----------------------------------------
         // Expiry date picker
-        // -------------------------------------------------
+        // -----------------------------------------
 
-        // Prevent manual typing.
-        // The user selects the expiry date from the calendar.
+        // Prevent manual typing because the user
+        // selects the date using the calendar.
         etExpiry.setFocusable(false);
         etExpiry.setClickable(true);
 
-        etExpiry.setOnClickListener(v -> showDatePicker());
+        etExpiry.setOnClickListener(
+                v -> showDatePicker()
+        );
 
-        // Check whether we are adding or editing
-        itemId = getIntent().getIntExtra("item_id", -1);
+        // -----------------------------------------
+        // Determine Add or Edit mode
+        // -----------------------------------------
+
+        itemId =
+                getIntent().getIntExtra(
+                        "item_id",
+                        -1
+                );
 
         if (itemId != -1) {
+
             loadExistingItem();
+
         } else {
-            tvFormTitle.setText("Add Ingredient");
+
+            tvFormTitle.setText(
+                    "Add Ingredient"
+            );
         }
 
+        // -----------------------------------------
         // Save button
-        btnSaveIngredient.setOnClickListener(v -> saveIngredient());
+        // -----------------------------------------
 
+        btnSaveIngredient.setOnClickListener(
+                v -> saveIngredient()
+        );
+
+        // -----------------------------------------
         // Cancel button
-        btnCancel.setOnClickListener(v -> finish());
+        // -----------------------------------------
+
+        btnCancel.setOnClickListener(
+                v -> finish()
+        );
     }
 
     /**
-     * Loads an existing pantry item when the user
-     * chooses to edit an ingredient.
+     * Loads an existing pantry item when
+     * the user selects Edit.
      */
     private void loadExistingItem() {
 
         PantryItem item =
-                databaseHelper.getPantryItem(itemId);
+                databaseHelper.getPantryItem(
+                        itemId
+                );
 
         if (item == null) {
 
@@ -123,16 +187,30 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             return;
         }
 
-        tvFormTitle.setText("Edit Ingredient");
+        tvFormTitle.setText(
+                "Edit Ingredient"
+        );
 
+        // Existing ingredient name
         etIngredientName.setText(
                 item.getIngredientName()
         );
 
+        // Existing quantity.
+        //
+        // QuantityFormatter removes unnecessary
+        // decimal zeros:
+        //
+        // 4.0  -> 4
+        // 2.0  -> 2
+        // 3.5  -> 3.5
         etQuantity.setText(
-                String.valueOf(item.getQuantity())
+                QuantityFormatter.format(
+                        item.getQuantity()
+                )
         );
 
+        // Existing expiry date
         etExpiry.setText(
                 item.getExpiryDate() == null
                         ? ""
@@ -140,28 +218,37 @@ public class AddEditIngredientActivity extends AppCompatActivity {
         );
 
         // Select the existing measurement unit
-        for (int i = 0; i < units.length; i++) {
+        for (int i = 0;
+             i < units.length;
+             i++) {
 
-            if (units[i].equalsIgnoreCase(item.getUnit())) {
+            if (units[i].equalsIgnoreCase(
+                    item.getUnit())) {
 
                 spinnerUnit.setSelection(i);
+
                 break;
             }
         }
     }
 
     /**
-     * Opens a calendar so that the user can select
-     * an expiry date instead of manually typing one.
+     * Opens the Android calendar for selecting
+     * an expiry date.
      */
     private void showDatePicker() {
 
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar =
+                Calendar.getInstance();
 
-        // If an existing valid expiry date is present,
-        // open the calendar on that date.
+        // -----------------------------------------
+        // If editing an existing item, open the
+        // calendar on its existing expiry date.
+        // -----------------------------------------
+
         String existingDate =
-                etExpiry.getText()
+                etExpiry
+                        .getText()
                         .toString()
                         .trim();
 
@@ -178,30 +265,47 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             try {
 
                 Date parsedDate =
-                        dateFormat.parse(existingDate);
+                        dateFormat.parse(
+                                existingDate
+                        );
 
                 if (parsedDate != null) {
-                    calendar.setTime(parsedDate);
+
+                    calendar.setTime(
+                            parsedDate
+                    );
                 }
 
             } catch (ParseException ignored) {
-                // If the stored value cannot be parsed,
-                // the calendar simply opens on today's date.
+
+                // If the existing value cannot
+                // be parsed, use today's date.
             }
         }
 
         int year =
-                calendar.get(Calendar.YEAR);
+                calendar.get(
+                        Calendar.YEAR
+                );
 
         int month =
-                calendar.get(Calendar.MONTH);
+                calendar.get(
+                        Calendar.MONTH
+                );
 
         int day =
-                calendar.get(Calendar.DAY_OF_MONTH);
+                calendar.get(
+                        Calendar.DAY_OF_MONTH
+                );
+
+        // -----------------------------------------
+        // Create DatePickerDialog
+        // -----------------------------------------
 
         DatePickerDialog datePickerDialog =
                 new DatePickerDialog(
                         this,
+
                         (view,
                          selectedYear,
                          selectedMonth,
@@ -216,16 +320,24 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                                             selectedDay
                                     );
 
-                            etExpiry.setText(selectedDate);
-                            etExpiry.setError(null);
+                            etExpiry.setText(
+                                    selectedDate
+                            );
+
+                            etExpiry.setError(
+                                    null
+                            );
                         },
+
                         year,
                         month,
                         day
                 );
 
-        // Prevent the user from selecting a date
-        // before today.
+        // -----------------------------------------
+        // Prevent selection of past dates
+        // -----------------------------------------
+
         Calendar today =
                 Calendar.getInstance();
 
@@ -259,10 +371,14 @@ public class AddEditIngredientActivity extends AppCompatActivity {
     }
 
     /**
-     * Validates the entered information and then
-     * adds or updates the pantry item in SQLite.
+     * Validates the form and then adds or
+     * updates the ingredient in SQLite.
      */
     private void saveIngredient() {
+
+        // -----------------------------------------
+        // Read entered information
+        // -----------------------------------------
 
         String ingredientName =
                 etIngredientName
@@ -287,9 +403,9 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                         .toString()
                         .trim();
 
-        // -------------------------------------------------
+        // -----------------------------------------
         // Ingredient name validation
-        // -------------------------------------------------
+        // -----------------------------------------
 
         if (ingredientName.isEmpty()) {
 
@@ -298,23 +414,27 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             );
 
             etIngredientName.requestFocus();
+
             return;
         }
 
-        // Ingredient must contain at least one letter
-        if (!ingredientName.matches(".*[a-zA-Z].*")) {
+        // Ingredient must contain at least
+        // one alphabetic character.
+        if (!ingredientName.matches(
+                ".*[a-zA-Z].*")) {
 
             etIngredientName.setError(
                     "Enter a valid ingredient name."
             );
 
             etIngredientName.requestFocus();
+
             return;
         }
 
-        // -------------------------------------------------
+        // -----------------------------------------
         // Quantity validation
-        // -------------------------------------------------
+        // -----------------------------------------
 
         if (quantityText.isEmpty()) {
 
@@ -323,6 +443,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             );
 
             etQuantity.requestFocus();
+
             return;
         }
 
@@ -342,6 +463,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             );
 
             etQuantity.requestFocus();
+
             return;
         }
 
@@ -352,6 +474,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             );
 
             etQuantity.requestFocus();
+
             return;
         }
 
@@ -362,18 +485,20 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             );
 
             etQuantity.requestFocus();
+
             return;
         }
 
-        // -------------------------------------------------
+        // -----------------------------------------
         // Expiry date validation
-        // -------------------------------------------------
+        // -----------------------------------------
 
-        // Expiry date is optional.
-        // If supplied, it must be valid and cannot be
-        // earlier than today's date.
+        // Expiry is optional.
+        // If supplied, it must be today
+        // or a future date.
         if (!expiryDate.isEmpty()
-                && !isValidDate(expiryDate)) {
+                && !isValidDate(
+                expiryDate)) {
 
             etExpiry.setError(
                     "Enter a valid expiry date that is today or later (YYYY-MM-DD)."
@@ -382,9 +507,9 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             return;
         }
 
-        // -------------------------------------------------
-        // Add or update SQLite record
-        // -------------------------------------------------
+        // -----------------------------------------
+        // Add new ingredient
+        // -----------------------------------------
 
         if (itemId == -1) {
 
@@ -408,6 +533,10 @@ public class AddEditIngredientActivity extends AppCompatActivity {
 
         } else {
 
+            // -------------------------------------
+            // Update existing ingredient
+            // -------------------------------------
+
             PantryItem updatedItem =
                     new PantryItem(
                             itemId,
@@ -428,20 +557,29 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             ).show();
         }
 
+        // Return to Pantry screen
         finish();
     }
 
     /**
-     * Checks that an expiry date:
+     * Validates an expiry date.
      *
-     * 1. Uses YYYY-MM-DD format.
-     * 2. Is a real calendar date.
-     * 3. Is today or a future date.
+     * The date must:
+     *
+     * 1. Use YYYY-MM-DD.
+     * 2. Be a real calendar date.
+     * 3. Be today or a future date.
      */
-    private boolean isValidDate(String date) {
+    private boolean isValidDate(
+            String date) {
 
-        // Required format
-        if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        // -----------------------------------------
+        // Check format
+        // -----------------------------------------
+
+        if (!date.matches(
+                "\\d{4}-\\d{2}-\\d{2}")) {
+
             return false;
         }
 
@@ -451,23 +589,29 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                         Locale.getDefault()
                 );
 
-        // Reject impossible dates such as 2026-02-31
+        // Prevent dates such as:
+        // 2026-02-31
         dateFormat.setLenient(false);
 
         try {
 
             Date enteredDate =
-                    dateFormat.parse(date);
+                    dateFormat.parse(
+                            date
+                    );
 
             if (enteredDate == null) {
+
                 return false;
             }
+
+            // -------------------------------------
+            // Get today's date without time
+            // -------------------------------------
 
             Calendar today =
                     Calendar.getInstance();
 
-            // Remove current time so that today's date
-            // remains valid.
             today.set(
                     Calendar.HOUR_OF_DAY,
                     0
@@ -488,6 +632,8 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                     0
             );
 
+            // Valid if the expiry date is today
+            // or sometime in the future.
             return !enteredDate.before(
                     today.getTime()
             );

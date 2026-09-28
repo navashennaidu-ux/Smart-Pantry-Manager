@@ -2,62 +2,119 @@
 
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
         <TextView
             android:id="@+id/tvFormTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Add Ingredient"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textSize="26sp"
-            android:paddingBottom="16dp"/>
+            android:layout_marginBottom="24dp" />
 
-        <EditText
-            android:id="@+id/etIngredientName"
+        <!-- Ingredient name -->
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Ingredient name"
-            android:inputType="textCapWords"/>
+            app:boxBackgroundMode="outline">
 
-        <EditText
-            android:id="@+id/etQuantity"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etIngredientName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Quantity -->
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:hint="Quantity"
-            android:inputType="numberDecimal"/>
+            app:boxBackgroundMode="outline">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etQuantity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Measurement unit -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Measurement unit"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <Spinner
             android:id="@+id/spinnerUnit"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
 
-        <EditText
-            android:id="@+id/etExpiry"
+        <!-- Expiry date -->
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Expiry date YYYY-MM-DD (optional)"
-            android:inputType="date"/>
+            android:layout_marginTop="18dp"
+            android:hint="Expiry date (optional)"
+            app:boxBackgroundMode="outline"
+            app:helperText="Tap to select a date">
 
-        <Button
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etExpiry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Save -->
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveIngredient"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
             android:text="Save Ingredient"
-            android:layout_marginTop="20dp"/>
+            app:cornerRadius="12dp" />
 
-        <Button
+        <!-- Cancel -->
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cancel"/>
+            android:layout_marginTop="8dp"
+            android:text="Cancel"
+            app:cornerRadius="12dp" />
 
     </LinearLayout>
 
