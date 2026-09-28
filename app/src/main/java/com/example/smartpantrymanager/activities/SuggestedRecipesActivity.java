@@ -3,7 +3,6 @@ package com.example.smartpantrymanager.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,82 +14,86 @@ import com.example.smartpantrymanager.adapters.RecipeAdapter;
 import com.example.smartpantrymanager.database.DatabaseHelper;
 import com.example.smartpantrymanager.models.Recipe;
 import com.example.smartpantrymanager.utils.IngredientMatcher;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
 
-public class SuggestedRecipesActivity
-        extends AppCompatActivity
+public class SuggestedRecipesActivity extends AppCompatActivity
         implements RecipeAdapter.OnRecipeClickListener {
 
+    private DatabaseHelper databaseHelper;
+    private RecipeAdapter recipeAdapter;
     private RecyclerView recyclerRecipes;
     private TextView tvNoRecipes;
-
-    private DatabaseHelper databaseHelper;
-    private RecipeAdapter adapter;
+    private BottomNavigationView bottomNavigation;
 
     @Override
-    protected void onCreate(
-            Bundle savedInstanceState) {
-
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_suggested_recipes);
 
-        setContentView(
-                R.layout.activity_suggested_recipes);
+        // Initialise database
+        databaseHelper = new DatabaseHelper(this);
 
-        databaseHelper =
-                new DatabaseHelper(this);
+        // Find views
+        recyclerRecipes = findViewById(R.id.recyclerRecipes);
+        tvNoRecipes = findViewById(R.id.tvNoRecipes);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
 
-        recyclerRecipes =
-                findViewById(
-                        R.id.recyclerRecipes);
-
-        tvNoRecipes =
-                findViewById(
-                        R.id.tvNoRecipes);
-
-        Button btnPantry =
-                findViewById(
-                        R.id.btnPantry);
-
-        Button btnSettings =
-                findViewById(
-                        R.id.btnSettings);
-
+        // Set up RecyclerView
         recyclerRecipes.setLayoutManager(
-                new LinearLayoutManager(this));
+                new LinearLayoutManager(this)
+        );
 
-        adapter =
-                new RecipeAdapter(
-                        IngredientMatcher
-                                .findMatchingRecipes(
-                                        databaseHelper),
-                        this);
+        // Get recipes that strictly match pantry contents
+        List<Recipe> matchingRecipes =
+                IngredientMatcher.findMatchingRecipes(databaseHelper);
 
-        recyclerRecipes.setAdapter(adapter);
+        recipeAdapter =
+                new RecipeAdapter(matchingRecipes, this);
 
-        btnPantry.setOnClickListener(v -> {
+        recyclerRecipes.setAdapter(recipeAdapter);
 
-            Intent intent =
-                    new Intent(
-                            SuggestedRecipesActivity.this,
-                            PantryActivity.class);
+        // Highlight Recipes in bottom navigation
+        bottomNavigation.setSelectedItemId(R.id.nav_recipes);
 
-            intent.addFlags(
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        // Handle bottom navigation
+        bottomNavigation.setOnItemSelectedListener(item -> {
 
-            startActivity(intent);
+            int itemId = item.getItemId();
 
-            finish();
-        });
+            // Open Pantry
+            if (itemId == R.id.nav_pantry) {
 
-        btnSettings.setOnClickListener(v -> {
+                Intent intent =
+                        new Intent(
+                                SuggestedRecipesActivity.this,
+                                PantryActivity.class
+                        );
 
-            Intent intent =
-                    new Intent(
-                            SuggestedRecipesActivity.this,
-                            SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            }
 
-            startActivity(intent);
+            // Already on Recipes
+            if (itemId == R.id.nav_recipes) {
+                return true;
+            }
+
+            // Open Settings
+            if (itemId == R.id.nav_settings) {
+
+                Intent intent =
+                        new Intent(
+                                SuggestedRecipesActivity.this,
+                                SettingsActivity.class
+                        );
+
+                startActivity(intent);
+                return true;
+            }
+
+            return false;
         });
 
         refreshRecipes();
@@ -98,51 +101,47 @@ public class SuggestedRecipesActivity
 
     @Override
     protected void onResume() {
-
         super.onResume();
 
-        refreshRecipes();
+        if (databaseHelper != null && recipeAdapter != null) {
+            refreshRecipes();
+        }
+
+        // Ensure Recipes remains highlighted
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_recipes);
+        }
     }
 
     private void refreshRecipes() {
 
-        List<Recipe> matches =
-                IngredientMatcher
-                        .findMatchingRecipes(
-                                databaseHelper);
+        List<Recipe> matchingRecipes =
+                IngredientMatcher.findMatchingRecipes(databaseHelper);
 
-        adapter.setRecipes(matches);
+        recipeAdapter.setRecipes(matchingRecipes);
 
-        if (matches.isEmpty()) {
+        if (matchingRecipes.isEmpty()) {
 
-            tvNoRecipes.setVisibility(
-                    View.VISIBLE);
-
-            recyclerRecipes.setVisibility(
-                    View.GONE);
+            tvNoRecipes.setVisibility(View.VISIBLE);
+            recyclerRecipes.setVisibility(View.GONE);
 
         } else {
 
-            tvNoRecipes.setVisibility(
-                    View.GONE);
-
-            recyclerRecipes.setVisibility(
-                    View.VISIBLE);
+            tvNoRecipes.setVisibility(View.GONE);
+            recyclerRecipes.setVisibility(View.VISIBLE);
         }
     }
 
     @Override
-    public void onRecipeClick(
-            Recipe recipe) {
+    public void onRecipeClick(Recipe recipe) {
 
         Intent intent =
                 new Intent(
-                        this,
-                        RecipeDetailActivity.class);
+                        SuggestedRecipesActivity.this,
+                        RecipeDetailActivity.class
+                );
 
-        intent.putExtra(
-                "recipe_id",
-                recipe.getId());
+        intent.putExtra("recipe_id", recipe.getId());
 
         startActivity(intent);
     }

@@ -3,8 +3,6 @@ package com.example.smartpantrymanager.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,89 +13,84 @@ import com.example.smartpantrymanager.R;
 import com.example.smartpantrymanager.adapters.PantryAdapter;
 import com.example.smartpantrymanager.database.DatabaseHelper;
 import com.example.smartpantrymanager.models.PantryItem;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
 
-public class PantryActivity
-        extends AppCompatActivity
+public class PantryActivity extends AppCompatActivity
         implements PantryAdapter.OnPantryItemListener {
 
-    private RecyclerView recyclerPantry;
-    private TextView tvEmptyPantry;
-
-    private PantryAdapter adapter;
     private DatabaseHelper databaseHelper;
+    private PantryAdapter pantryAdapter;
+    private RecyclerView recyclerPantry;
+    private android.widget.TextView tvEmptyPantry;
+    private BottomNavigationView bottomNavigation;
 
     @Override
-    protected void onCreate(
-            Bundle savedInstanceState) {
-
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_pantry);
 
-        setContentView(
-                R.layout.activity_pantry);
+        // Initialise database
+        databaseHelper = new DatabaseHelper(this);
 
-        databaseHelper =
-                new DatabaseHelper(this);
+        // Find views
+        recyclerPantry = findViewById(R.id.recyclerPantry);
+        tvEmptyPantry = findViewById(R.id.tvEmptyPantry);
+        bottomNavigation = findViewById(R.id.bottomNavigation);
 
-        recyclerPantry =
-                findViewById(
-                        R.id.recyclerPantry);
+        // Set up RecyclerView
+        recyclerPantry.setLayoutManager(new LinearLayoutManager(this));
 
-        tvEmptyPantry =
-                findViewById(
-                        R.id.tvEmptyPantry);
+        List<PantryItem> pantryItems =
+                databaseHelper.getAllPantryItems();
 
-        Button btnAddIngredient =
-                findViewById(
-                        R.id.btnAddIngredient);
+        pantryAdapter = new PantryAdapter(pantryItems, this);
+        recyclerPantry.setAdapter(pantryAdapter);
 
-        Button btnRecipes =
-                findViewById(
-                        R.id.btnRecipes);
-
-        Button btnSettings =
-                findViewById(
-                        R.id.btnSettings);
-
-        recyclerPantry.setLayoutManager(
-                new LinearLayoutManager(this));
-
-        adapter =
-                new PantryAdapter(
-                        databaseHelper.getAllPantryItems(),
-                        this);
-
-        recyclerPantry.setAdapter(adapter);
-
-        btnAddIngredient.setOnClickListener(v -> {
-
+        // Add Ingredient button
+        findViewById(R.id.btnAddIngredient).setOnClickListener(v -> {
             Intent intent =
-                    new Intent(
-                            PantryActivity.this,
+                    new Intent(PantryActivity.this,
                             AddEditIngredientActivity.class);
 
             startActivity(intent);
         });
 
-        btnRecipes.setOnClickListener(v -> {
+        // Highlight Pantry in bottom navigation
+        bottomNavigation.setSelectedItemId(R.id.nav_pantry);
 
-            Intent intent =
-                    new Intent(
-                            PantryActivity.this,
-                            SuggestedRecipesActivity.class);
+        // Bottom navigation
+        bottomNavigation.setOnItemSelectedListener(item -> {
 
-            startActivity(intent);
-        });
+            int itemId = item.getItemId();
 
-        btnSettings.setOnClickListener(v -> {
+            // Already on Pantry
+            if (itemId == R.id.nav_pantry) {
+                return true;
+            }
 
-            Intent intent =
-                    new Intent(
-                            PantryActivity.this,
-                            SettingsActivity.class);
+            // Open Suggested Recipes
+            if (itemId == R.id.nav_recipes) {
+                Intent intent =
+                        new Intent(PantryActivity.this,
+                                SuggestedRecipesActivity.class);
 
-            startActivity(intent);
+                startActivity(intent);
+                return true;
+            }
+
+            // Open Settings
+            if (itemId == R.id.nav_settings) {
+                Intent intent =
+                        new Intent(PantryActivity.this,
+                                SettingsActivity.class);
+
+                startActivity(intent);
+                return true;
+            }
+
+            return false;
         });
 
         refreshPantry();
@@ -105,34 +98,34 @@ public class PantryActivity
 
     @Override
     protected void onResume() {
-
         super.onResume();
 
-        refreshPantry();
+        if (databaseHelper != null && pantryAdapter != null) {
+            refreshPantry();
+        }
+
+        // Ensure Pantry is highlighted when returning to this screen
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_pantry);
+        }
     }
 
     private void refreshPantry() {
 
-        List<PantryItem> items =
+        List<PantryItem> pantryItems =
                 databaseHelper.getAllPantryItems();
 
-        adapter.setPantryItems(items);
+        pantryAdapter.setPantryItems(pantryItems);
 
-        if (items.isEmpty()) {
+        if (pantryItems.isEmpty()) {
 
-            tvEmptyPantry.setVisibility(
-                    View.VISIBLE);
-
-            recyclerPantry.setVisibility(
-                    View.GONE);
+            tvEmptyPantry.setVisibility(View.VISIBLE);
+            recyclerPantry.setVisibility(View.GONE);
 
         } else {
 
-            tvEmptyPantry.setVisibility(
-                    View.GONE);
-
-            recyclerPantry.setVisibility(
-                    View.VISIBLE);
+            tvEmptyPantry.setVisibility(View.GONE);
+            recyclerPantry.setVisibility(View.VISIBLE);
         }
     }
 
@@ -140,13 +133,10 @@ public class PantryActivity
     public void onEdit(PantryItem item) {
 
         Intent intent =
-                new Intent(
-                        this,
+                new Intent(PantryActivity.this,
                         AddEditIngredientActivity.class);
 
-        intent.putExtra(
-                "item_id",
-                item.getId());
+        intent.putExtra("item_id", item.getId());
 
         startActivity(intent);
     }
@@ -157,22 +147,17 @@ public class PantryActivity
         new AlertDialog.Builder(this)
                 .setTitle("Delete Ingredient")
                 .setMessage(
-                        "Delete " +
-                                item.getIngredientName() +
-                                " from your pantry?")
-                .setPositiveButton(
-                        "Delete",
-                        (dialog, which) -> {
+                        "Are you sure you want to delete "
+                                + item.getIngredientName()
+                                + "?"
+                )
+                .setPositiveButton("Delete", (dialog, which) -> {
 
-                            databaseHelper
-                                    .deletePantryItem(
-                                            item.getId());
+                    databaseHelper.deletePantryItem(item.getId());
 
-                            refreshPantry();
-                        })
-                .setNegativeButton(
-                        "Cancel",
-                        null)
+                    refreshPantry();
+                })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 }

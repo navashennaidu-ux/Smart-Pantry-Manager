@@ -2,26 +2,31 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- Screen title -->
     <TextView
+        android:id="@+id/tvSuggestedRecipesTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Suggested Recipes"
+        android:textSize="28sp"
         android:textStyle="bold"
-        android:textSize="28sp"/>
+        android:layout_marginBottom="4dp" />
 
+    <!-- Explanation of strict matching -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Only recipes for which you already have every required ingredient are shown."
-        android:textSize="15sp"
-        android:paddingTop="6dp"
-        android:paddingBottom="10dp"/>
+        android:textSize="14sp"
+        android:layout_marginBottom="12dp" />
 
+    <!-- Message displayed when no recipes match -->
     <TextView
         android:id="@+id/tvNoRecipes"
         android:layout_width="match_parent"
@@ -29,41 +34,25 @@
         android:text="No recipes match your pantry yet - add more ingredients."
         android:textSize="17sp"
         android:gravity="center"
-        android:padding="24dp"
-        android:visibility="gone"/>
+        android:padding="20dp"
+        android:visibility="gone" />
 
+    <!-- Matching recipe list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerRecipes"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
 
-    <LinearLayout
+    <!-- Proper Material bottom navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnPantry"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Pantry"/>
-
-        <Button
-            android:id="@+id/btnRecipes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Recipes"/>
-
-        <Button
-            android:id="@+id/btnSettings"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Settings"/>
-
-    </LinearLayout>
+        android:background="?android:attr/windowBackground"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_navigation_menu" />
 
 </LinearLayout>
