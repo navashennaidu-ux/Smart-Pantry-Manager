@@ -11,49 +11,44 @@ import java.util.Locale;
 
 public class IngredientMatcher {
 
+    /**
+     * Returns only recipes for which the pantry contains
+     * EVERY required ingredient in a sufficient quantity.
+     */
     public static List<Recipe> findMatchingRecipes(
             DatabaseHelper databaseHelper) {
-
-        List<Recipe> matchingRecipes =
-                new ArrayList<>();
 
         List<Recipe> allRecipes =
                 databaseHelper.getAllRecipes();
 
-        List<PantryItem> pantry =
+        List<PantryItem> pantryItems =
                 databaseHelper.getAllPantryItems();
+
+        List<Recipe> matchingRecipes =
+                new ArrayList<>();
 
         for (Recipe recipe : allRecipes) {
 
             List<RecipeIngredient> requiredIngredients =
                     databaseHelper.getRecipeIngredients(
-                            recipe.getId());
+                            recipe.getId()
+                    );
 
-            boolean canMakeRecipe = true;
+            boolean completeMatch = true;
 
             for (RecipeIngredient required :
                     requiredIngredients) {
 
-                double availableQuantity =
-                        getAvailableQuantity(
-                                pantry,
-                                required);
+                if (!hasEnoughIngredient(
+                        required,
+                        pantryItems)) {
 
-                double neededQuantity =
-                        convertToBaseUnit(
-                                required.getRequiredQuantity(),
-                                required.getUnit());
-
-                if (availableQuantity < neededQuantity) {
-
-                    canMakeRecipe = false;
+                    completeMatch = false;
                     break;
                 }
             }
 
-            if (canMakeRecipe &&
-                    !requiredIngredients.isEmpty()) {
-
+            if (completeMatch) {
                 matchingRecipes.add(recipe);
             }
         }
@@ -61,137 +56,161 @@ public class IngredientMatcher {
         return matchingRecipes;
     }
 
-    private static double getAvailableQuantity(
-            List<PantryItem> pantry,
-            RecipeIngredient required) {
-
-        double total = 0;
+    /**
+     * Checks whether the pantry contains enough of
+     * one particular recipe ingredient.
+     *
+     * Multiple pantry entries for the same ingredient
+     * are added together.
+     */
+    private static boolean hasEnoughIngredient(
+            RecipeIngredient required,
+            List<PantryItem> pantryItems) {
 
         String requiredName =
                 normalizeIngredientName(
-                        required.getIngredientName());
+                        required.getIngredientName()
+                );
 
         String requiredUnitType =
                 getUnitType(required.getUnit());
 
-        for (PantryItem pantryItem : pantry) {
+        double requiredQuantity =
+                convertToBaseUnit(
+                        required.getRequiredQuantity(),
+                        required.getUnit()
+                );
+
+        double availableQuantity = 0;
+
+        for (PantryItem pantryItem :
+                pantryItems) {
 
             String pantryName =
                     normalizeIngredientName(
-                            pantryItem.getIngredientName());
+                            pantryItem.getIngredientName()
+                    );
+
+            // Ingredient names must match
+            if (!requiredName.equals(pantryName)) {
+                continue;
+            }
 
             String pantryUnitType =
                     getUnitType(
-                            pantryItem.getUnit());
+                            pantryItem.getUnit()
+                    );
 
-            if (pantryName.equals(requiredName) &&
-                    pantryUnitType.equals(requiredUnitType)) {
-
-                total += convertToBaseUnit(
-                        pantryItem.getQuantity(),
-                        pantryItem.getUnit());
+            // Units must belong to the same category.
+            // For example, grams cannot satisfy millilitres.
+            if (!requiredUnitType.equals(
+                    pantryUnitType)) {
+                continue;
             }
+
+            availableQuantity +=
+                    convertToBaseUnit(
+                            pantryItem.getQuantity(),
+                            pantryItem.getUnit()
+                    );
         }
 
-        return total;
+        return availableQuantity >=
+                requiredQuantity;
     }
 
-    public static String normalizeIngredientName(
-            String name) {
+    /**
+     * Normalises ingredient names so simple singular
+     * and plural variations can be matched.
+     *
+     * Examples:
+     * Eggs     -> egg
+     * Tomatoes -> tomato
+     * Potatoes -> potato
+     * Berries  -> berry
+     */
+    private static String normalizeIngredientName(
+            String ingredientName) {
 
-        if (name == null) {
+        if (ingredientName == null) {
             return "";
         }
 
-        String result =
-                name.trim()
-                        .toLowerCase(Locale.ROOT);
+        String name =
+                ingredientName
+                        .toLowerCase(Locale.ROOT)
+                        .trim()
+                        .replaceAll("\\s+", " ");
 
-        // Remove unnecessary spaces
-        result = result.replaceAll("\\s+", " ");
-
-        // Some common plural forms
-        if (result.endsWith("atoes")) {
-            // potatoes -> potato
-            result =
-                    result.substring(
-                            0,
-                            result.length() - 2);
-        }
-        else if (result.endsWith("oes")) {
-            // tomatoes -> tomato
-            result =
-                    result.substring(
-                            0,
-                            result.length() - 2);
-        }
-        else if (result.endsWith("ies") &&
-                result.length() > 3) {
-
-            result =
-                    result.substring(
-                            0,
-                            result.length() - 3)
-                            + "y";
-        }
-        else if (result.endsWith("s") &&
-                !result.endsWith("ss") &&
-                result.length() > 3) {
-
-            result =
-                    result.substring(
-                            0,
-                            result.length() - 1);
+        // Specific common pantry plurals
+        if (name.equals("tomatoes")) {
+            return "tomato";
         }
 
-        return result;
+        if (name.equals("potatoes")) {
+            return "potato";
+        }
+
+        // Example: berries -> berry
+        if (name.endsWith("ies")
+                && name.length() > 3) {
+
+            return name.substring(
+                    0,
+                    name.length() - 3
+            ) + "y";
+        }
+
+        // Example:
+        // eggs -> egg
+        // bananas -> banana
+        // apples -> apple
+        //
+        // Avoid removing the final s from words
+        // that naturally end in ss.
+        if (name.endsWith("s")
+                && !name.endsWith("ss")
+                && name.length() > 1) {
+
+            return name.substring(
+                    0,
+                    name.length() - 1
+            );
+        }
+
+        return name;
     }
 
-    public static double convertToBaseUnit(
+    /**
+     * Converts compatible measurements into a common
+     * base unit.
+     *
+     * Mass   -> grams
+     * Volume -> millilitres
+     * Count  -> individual items
+     */
+    private static double convertToBaseUnit(
             double quantity,
             String unit) {
 
-        if (unit == null) {
-            return quantity;
-        }
+        String normalizedUnit =
+                normalizeUnit(unit);
 
-        String normalized =
-                unit.trim()
-                        .toLowerCase(Locale.ROOT);
-
-        switch (normalized) {
+        switch (normalizedUnit) {
 
             case "kg":
-            case "kilogram":
-            case "kilograms":
-                return quantity * 1000;
+                return quantity * 1000.0;
 
             case "g":
-            case "gram":
-            case "grams":
                 return quantity;
 
             case "l":
-            case "litre":
-            case "litres":
-            case "liter":
-            case "liters":
-                return quantity * 1000;
+                return quantity * 1000.0;
 
             case "ml":
-            case "millilitre":
-            case "millilitres":
-            case "milliliter":
-            case "milliliters":
                 return quantity;
 
             case "each":
-            case "item":
-            case "items":
-            case "piece":
-            case "pieces":
-            case "unit":
-            case "units":
                 return quantity;
 
             default:
@@ -199,50 +218,83 @@ public class IngredientMatcher {
         }
     }
 
-    public static String getUnitType(
+    /**
+     * Identifies whether a measurement represents
+     * mass, volume or a count.
+     */
+    private static String getUnitType(
             String unit) {
 
-        if (unit == null) {
-            return "unknown";
-        }
+        String normalizedUnit =
+                normalizeUnit(unit);
 
-        String normalized =
-                unit.trim()
-                        .toLowerCase(Locale.ROOT);
+        switch (normalizedUnit) {
 
-        switch (normalized) {
-
-            case "kg":
-            case "kilogram":
-            case "kilograms":
             case "g":
-            case "gram":
-            case "grams":
+            case "kg":
                 return "mass";
 
-            case "l":
-            case "litre":
-            case "litres":
-            case "liter":
-            case "liters":
             case "ml":
-            case "millilitre":
-            case "millilitres":
-            case "milliliter":
-            case "milliliters":
+            case "l":
                 return "volume";
 
             case "each":
+                return "count";
+
+            default:
+                return "unknown";
+        }
+    }
+
+    /**
+     * Normalises common unit names.
+     */
+    private static String normalizeUnit(String unit) {
+
+        if (unit == null) {
+            return "";
+        }
+
+        String normalized =
+                unit.toLowerCase(Locale.ROOT)
+                        .trim();
+
+        switch (normalized) {
+
+            // Grams
+            case "gram":
+            case "grams":
+                return "g";
+
+            // Kilograms
+            case "kilogram":
+            case "kilograms":
+                return "kg";
+
+            // Millilitres
+            case "milliliter":
+            case "milliliters":
+            case "millilitre":
+            case "millilitres":
+                return "ml";
+
+            // Litres
+            case "liter":
+            case "liters":
+            case "litre":
+            case "litres":
+                return "l";
+
+            // Countable items
             case "item":
             case "items":
             case "piece":
             case "pieces":
             case "unit":
             case "units":
-                return "count";
+                return "each";
 
             default:
                 return normalized;
         }
-    }
-}
+    }}
