@@ -1,5 +1,7 @@
 package com.example.smartpantrymanager.adapters;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smartpantrymanager.R;
 import com.example.smartpantrymanager.models.PantryItem;
+import com.example.smartpantrymanager.utils.ExpiryUtils;
 import com.example.smartpantrymanager.utils.QuantityFormatter;
 
 import java.util.List;
@@ -18,13 +21,15 @@ import java.util.List;
 public class PantryAdapter
         extends RecyclerView.Adapter<PantryAdapter.PantryViewHolder> {
 
+    private static final String PREFS_NAME =
+            "SmartPantrySettings";
+
+    private static final String KEY_EXPIRY_ALERTS =
+            "expiry_alerts";
+
     private List<PantryItem> pantryItems;
     private final OnPantryItemListener listener;
 
-    /**
-     * Interface used to send Edit and Delete actions
-     * back to PantryActivity.
-     */
     public interface OnPantryItemListener {
 
         void onEdit(PantryItem item);
@@ -32,9 +37,6 @@ public class PantryAdapter
         void onDelete(PantryItem item);
     }
 
-    /**
-     * Constructor for the RecyclerView adapter.
-     */
     public PantryAdapter(
             List<PantryItem> pantryItems,
             OnPantryItemListener listener) {
@@ -43,9 +45,6 @@ public class PantryAdapter
         this.listener = listener;
     }
 
-    /**
-     * Creates the layout used for each pantry item.
-     */
     @NonNull
     @Override
     public PantryViewHolder onCreateViewHolder(
@@ -64,10 +63,6 @@ public class PantryAdapter
         return new PantryViewHolder(view);
     }
 
-    /**
-     * Places the pantry information into each
-     * RecyclerView item.
-     */
     @Override
     public void onBindViewHolder(
             @NonNull PantryViewHolder holder,
@@ -76,18 +71,18 @@ public class PantryAdapter
         PantryItem item =
                 pantryItems.get(position);
 
+        // -----------------------------
         // Ingredient name
+        // -----------------------------
+
         holder.tvIngredientName.setText(
                 item.getIngredientName()
         );
 
-        // Quantity and measurement unit.
-        // QuantityFormatter removes unnecessary
-        // decimal zeros.
-        //
-        // Example:
-        // 10.0 -> 10
-        // 1.5  -> 1.5
+        // -----------------------------
+        // Quantity
+        // -----------------------------
+
         holder.tvQuantity.setText(
                 QuantityFormatter.format(
                         item.getQuantity()
@@ -96,39 +91,66 @@ public class PantryAdapter
                         + item.getUnit()
         );
 
-        // Expiry date
-        String expiryDate =
-                item.getExpiryDate();
+        // -----------------------------
+        // Expiry information
+        // -----------------------------
 
-        if (expiryDate == null
-                || expiryDate.trim().isEmpty()) {
+        String expiryDisplay =
+                ExpiryUtils.getExpiryDisplay(
+                        item.getExpiryDate()
+                );
+
+        // Read the user's saved expiry-alert setting.
+        Context context =
+                holder.itemView.getContext();
+
+        SharedPreferences preferences =
+                context.getSharedPreferences(
+                        PREFS_NAME,
+                        Context.MODE_PRIVATE
+                );
+
+        boolean expiryAlertsEnabled =
+                preferences.getBoolean(
+                        KEY_EXPIRY_ALERTS,
+                        true
+                );
+
+        // Add a warning symbol only when:
+        // 1. Expiry alerts are enabled.
+        // 2. The ingredient expires within 7 days.
+        if (expiryAlertsEnabled
+                && ExpiryUtils.isExpiringSoon(
+                item.getExpiryDate())) {
 
             holder.tvExpiry.setText(
-                    "Expiry: Not specified"
+                    "⚠ " + expiryDisplay
             );
 
         } else {
 
             holder.tvExpiry.setText(
-                    "Expiry: " + expiryDate
+                    expiryDisplay
             );
         }
 
-        // Edit ingredient
+        // -----------------------------
+        // Edit button
+        // -----------------------------
+
         holder.btnEdit.setOnClickListener(
                 v -> listener.onEdit(item)
         );
 
-        // Delete ingredient
+        // -----------------------------
+        // Delete button
+        // -----------------------------
+
         holder.btnDelete.setOnClickListener(
                 v -> listener.onDelete(item)
         );
     }
 
-    /**
-     * Returns the number of pantry records that
-     * should be displayed.
-     */
     @Override
     public int getItemCount() {
 
@@ -139,10 +161,6 @@ public class PantryAdapter
         return pantryItems.size();
     }
 
-    /**
-     * Replaces the RecyclerView data when the
-     * pantry is refreshed.
-     */
     public void setPantryItems(
             List<PantryItem> pantryItems) {
 
@@ -151,10 +169,6 @@ public class PantryAdapter
         notifyDataSetChanged();
     }
 
-    /**
-     * Holds references to the views contained
-     * inside item_pantry.xml.
-     */
     static class PantryViewHolder
             extends RecyclerView.ViewHolder {
 
