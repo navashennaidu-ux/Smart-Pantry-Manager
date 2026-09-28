@@ -2,14 +2,18 @@
 
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
+
+        <!-- Recipe name -->
 
         <TextView
             android:id="@+id/tvRecipeDetailName"
@@ -17,46 +21,90 @@
             android:layout_height="wrap_content"
             android:text="Recipe Name"
             android:textSize="28sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ingredients"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginBottom="20dp" />
 
-        <TextView
-            android:id="@+id/tvRecipeIngredients"
+        <!-- Ingredients card -->
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ingredients"
-            android:textSize="17sp"
-            android:paddingTop="8dp"/>
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="1dp">
 
-        <TextView
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ingredients"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/tvRecipeIngredients"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Recipe ingredients"
+                    android:textSize="16sp"
+                    android:lineSpacingExtra="5dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Method card -->
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Method"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="1dp">
 
-        <TextView
-            android:id="@+id/tvRecipeMethod"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Method"
-            android:textSize="17sp"
-            android:paddingTop="8dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <Button
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Preparation Method"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/tvRecipeMethod"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Recipe preparation instructions"
+                    android:textSize="16sp"
+                    android:lineSpacingExtra="5dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Back button -->
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBack"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="Back to Recipes"
-            android:layout_marginTop="24dp"/>
+            app:cornerRadius="12dp" />
 
     </LinearLayout>
 
